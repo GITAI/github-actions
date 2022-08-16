@@ -44,13 +44,14 @@ runs:
         CATKIN_TEST_ARGS: ${{ inputs.catkin_test_args }}
         TERM: xterm-256color
     - name: List test results
-      id: list_test_results
+      if: success() || failure()
       run: |
         find "${{ inputs.catkin_workspace }}" -iwholename "build/**/test_results/**/*.xml"
       shell: bash
     - name: Test report
       uses: dorny/test-reporter@v1
-      if: (success() || failure()) && steps.list_test_results.conclusion == 'failure'
+      if: success() || failure()
+      continue-on-error: true
       with:
         name: Tests
         path: "${{ inputs.catkin_workspace }}/build/*/test_results/**/*.xml"
