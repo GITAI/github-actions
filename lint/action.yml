@@ -21,7 +21,7 @@ inputs:
 
 runs:
   using: docker
-  image: 581809361527.dkr.ecr.us-west-1.amazonaws.com/gitai-style:latest
+  image: Dockerfile
   env:
     STYLE_CLANG_FORMAT_VERSION: ${{ inputs.clang_format_version }}
     CIRCLE_PULL_REQUEST: true
