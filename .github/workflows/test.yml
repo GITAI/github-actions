@@ -2,7 +2,6 @@ name: Test actions
 
 on:
   pull_request_target:
-    types: [labeled]
   workflow_dispatch:
 
 jobs:
