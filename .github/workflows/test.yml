@@ -40,3 +40,7 @@ jobs:
         uses: ./build_catkin_workspace
         with:
           catkin_workspace: catkin_ws
+      - name: Test test_catkin_workspace action
+        uses: ./test_catkin_workspace
+        with:
+          catkin_workspace: catkin_ws
