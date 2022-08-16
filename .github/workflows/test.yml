@@ -22,10 +22,11 @@ jobs:
         run: |
           mkdir -p catkin_ws/src
           cd catkin_ws/src
-          catkin create pkg project -c roscpp_tutorials rospy_tutorials
+          git clone https://github.com/ros/common_tutorials.git --depth=1 --branch=noetic-devel project
           cd project
-          rosinstall_generator roscpp_tutorials rospy_tutorials --rosdistro noetic --upstream | tee .travis.rosinstall
-          tree
+          rosinstall_generator actionlib_msgs --rosdistro noetic --upstream | tee .travis.rosinstall
+          cd ../../..
+          tree -a -I .git
       - name: Test setup_catkin_workspace action
         uses: ./setup_catkin_workspace
         with:
