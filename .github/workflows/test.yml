@@ -9,7 +9,7 @@ jobs:
   test:
     name: Test actions
     runs-on: [self-hosted, linux, x64]
-    if: contains(github.event.pull_request.labels.*.name, 'OK To Test')
+    if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout the project
         uses: actions/checkout@v3
