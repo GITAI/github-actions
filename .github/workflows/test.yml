@@ -2,12 +2,14 @@ name: Test actions
 
 on:
   pull_request_target:
+    types: [labeled]
   workflow_dispatch:
 
 jobs:
   test:
     name: Test actions
     runs-on: [self-hosted, linux, x64]
+    if: contains(github.event.pull_request.labels.*.name, 'OK To Test')
     steps:
       - name: Checkout the project
         uses: actions/checkout@v3
