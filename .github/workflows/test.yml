@@ -44,3 +44,5 @@ jobs:
         uses: ./test_catkin_workspace
         with:
           catkin_workspace: catkin_ws
+      - name: Test lint_clang_tidy action
+        uses: ./lint_clang_tidy
