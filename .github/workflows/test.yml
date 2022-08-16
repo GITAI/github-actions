@@ -25,7 +25,8 @@ jobs:
           cd catkin_ws/src
           catkin create pkg project -c roscpp_tutorials rospy_tutorials
           cd project
-          rosinstall_generator roscpp_tutorials rospy_tutorials --rosdistro noetic --upstream >> .travis.rosinstall
+          rosinstall_generator roscpp_tutorials rospy_tutorials --rosdistro noetic --upstream | tee .travis.rosinstall
+          tree
       - name: Test setup_catkin_workspace action
         uses: ./setup_catkin_workspace
         with:
