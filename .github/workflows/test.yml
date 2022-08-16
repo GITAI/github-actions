@@ -18,6 +18,15 @@ jobs:
           submodules: true
       - name: Test lint action
         uses: ./lint
+      - name: Setup catkin workspace with a sample package
+        shell: bash
+        run: |
+          mkdir -p catkin_ws/src
+          cd catkin_ws/src
+          catkin create pkg project -c roscpp_tutorials rospy_tutorials
+          cd project
+          rosinstall_generator roscpp_tutorials rospy_tutorials --rosdistro noetic --upstream >> .travis.rosinstall
+      - name: Test setup_catkin_workspace action
+        uses: ./setup_catkin_workspace
         with:
-          user: GITAI
-          token: ${{ secrets.GH_TOKEN }}
+          catkin_workspace: catkin_ws

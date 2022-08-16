@@ -1,0 +1,56 @@
+name: Setup catkin workspace
+author: Yuki Furuta
+description: Prepare catkin workspace
+
+inputs:
+  ros_distro:
+    description: ROS version
+    required: false
+    default: noetic
+  catkin_workspace:
+    description: Path to catkin workspace relative to $GITHUB_WORKSPACE
+    required: false
+    default: .
+  catkin_extend:
+    description: Path to extending catkin workspace
+    required: false
+    default: ''
+  rosinstall_file:
+    description: Path to .rosinstall file of the project
+    required: false
+    default: .travis.rosinstall
+  deps_rosinstall_file:
+    description: Path to .rosinstall file of the dependencies of the project
+    required: false
+    default: .travis.rosinstall
+  user:
+    description: Username to fetch repositories
+    default: ${{ github.repository_owner }}
+  token:
+    description: Token to fetch repositories
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup git config
+      run: |
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git://github.com/"
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git@github.com:"
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "https://github.com/"
+        mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      shell: bash
+    - name: Setup catkin workspace
+      run: /setup_catkin_workspace.sh
+      shell: bash
+      env:
+        ROS_DISTRO: ${{ inputs.ros_distro }}
+        CATKIN_WORKSPACE: ${{ inputs.catkin_workspace }}
+        CATKIN_EXTEND: ${{ inputs.catkin_extend }}
+        ROSINSTALL_FILE: ${{ inputs.rosinstall_file }}
+        DEPS_ROSINSTALL_FILE: ${{ inputs.deps_rosinstall_file }}
+        TERM: xterm-256color
+    - name: Cleanup git config
+      if: ${{ always() }}
+      run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
+      shell: bash
