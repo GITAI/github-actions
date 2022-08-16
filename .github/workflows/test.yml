@@ -2,14 +2,13 @@ name: Test actions
 
 on:
   pull_request_target:
-    types: [labeled]
   workflow_dispatch:
 
 jobs:
   test:
     name: Test actions
     runs-on: [self-hosted, linux, x64]
-    if: contains(github.event.pull_request.labels.*.name, 'OK To Test')
+    if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout the project
         uses: actions/checkout@v3
@@ -25,7 +24,8 @@ jobs:
           cd catkin_ws/src
           catkin create pkg project -c roscpp_tutorials rospy_tutorials
           cd project
-          rosinstall_generator roscpp_tutorials rospy_tutorials --rosdistro noetic --upstream >> .travis.rosinstall
+          rosinstall_generator roscpp_tutorials rospy_tutorials --rosdistro noetic --upstream | tee .travis.rosinstall
+          tree
       - name: Test setup_catkin_workspace action
         uses: ./setup_catkin_workspace
         with:
