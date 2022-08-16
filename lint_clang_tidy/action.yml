@@ -1,0 +1,30 @@
+name: Lint clang-tidy for the project
+author: Yuki Furuta
+description: Lint clang-tidy for the project
+
+inputs:
+  repository_name:
+    description: Name of the repository
+    default: ${{ github.event.pull_request.head.repo.name }}
+  pull_request_number:
+    description: Number of pull request
+    default: ${{ github.event.number }}
+  user:
+    description: Username to fetch repositories
+    default: ${{ github.repository_owner }}
+  token:
+    description: Token to fetch repositories
+    default: ${{ github.token }}
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - --clang-tidy
+  env:
+    CIRCLE_PULL_REQUEST: true
+    CIRCLE_PROJECT_USERNAME: ${{ inputs.user }}
+    CIRCLE_PROJECT_REPONAME: ${{ inputs.repository_name }}
+    CIRCLE_PR_NUMBER: ${{ inputs.pull_request_number }}
+    GITHUB_ACCESS_TOKEN: ${{ inputs.token }}
+    PYTHONUNBUFFERED: x
