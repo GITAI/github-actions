@@ -1,0 +1,76 @@
+name: Build catkin workspace
+author: Yuki Furuta
+description: Build software stack using catkin build
+
+inputs:
+  ros_distro:
+    description: ROS version
+    required: false
+    default: noetic
+  catkin_workspace:
+    description: Path to catkin workspace relative to $GITHUB_WORKSPACE
+    required: false
+    default: .
+  catkin_extend:
+    description: Path to extending catkin workspace
+    required: false
+    default: ''
+  user:
+    description: Username to fetch repositories
+    default: ${{ github.repository_owner }}
+  token:
+    description: Token to fetch repositories
+    default: ${{ github.token }}
+  ccache_storage_size:
+    description: Storage size for ccache
+    default: 5G
+  cmake_build_type:
+    description: Build type of cmake
+    default: RelWithDebInfo
+  cmake_args:
+    description: Optional arguments passed to cmake
+    default: ''
+  catkin_build_targets:
+    description: Target packages to be built
+    default: project
+  catkin_build_args:
+    description: Arguments to run catkin build with
+    default: --limit-status-rate 0.0017 --summarize
+  catkin_install:
+    description: Enable catkin install workspace
+    default: true
+  
+
+runs:
+  using: composite
+  steps:
+    - name: Setup git config
+      run: |
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git://github.com/"
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git@github.com:"
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "https://github.com/"
+        mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+      shell: bash
+    - name: Setup ccache
+      run: |
+        ccache -M ${{ inputs.ccache_storage_size }}
+        ccache -o compression=true
+        ccache -o sloppiness=file_macro,time_macros
+      shell: bash
+    # - name: Build catkin workspace
+    #   run: /build_catkin_workspace.sh
+    #   shell: bash
+    #   env:
+    #     ROS_DISTRO: ${{ inputs.ros_distro }}
+    #     CATKIN_WORKSPACE: ${{ inputs.catkin_workspace }}
+    #     CATKIN_EXTEND: ${{ inputs.catkin_extend }}
+    #     CMAKE_BUILD_TYPE: ${{ inputs.cmake_build_type }}
+    #     CMAKE_ARGS: ${{ inputs.cmake_args }}
+    #     CATKIN_BUILD_TARGETS: ${{ inputs.catkin_build_targets }}
+    #     CATKIN_BUILD_ARGS: ${{ inputs.catkin_build_args }}
+    #     CATKIN_INSTALL: ${{ inputs.catkin_install }}
+    #     TERM: xterm-256color
+    - name: Cleanup git config
+      if: ${{ always() }}
+      run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
+      shell: bash
