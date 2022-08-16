@@ -57,19 +57,19 @@ runs:
         ccache -o compression=true
         ccache -o sloppiness=file_macro,time_macros
       shell: bash
-    # - name: Build catkin workspace
-    #   run: /build_catkin_workspace.sh
-    #   shell: bash
-    #   env:
-    #     ROS_DISTRO: ${{ inputs.ros_distro }}
-    #     CATKIN_WORKSPACE: ${{ inputs.catkin_workspace }}
-    #     CATKIN_EXTEND: ${{ inputs.catkin_extend }}
-    #     CMAKE_BUILD_TYPE: ${{ inputs.cmake_build_type }}
-    #     CMAKE_ARGS: ${{ inputs.cmake_args }}
-    #     CATKIN_BUILD_TARGETS: ${{ inputs.catkin_build_targets }}
-    #     CATKIN_BUILD_ARGS: ${{ inputs.catkin_build_args }}
-    #     CATKIN_INSTALL: ${{ inputs.catkin_install }}
-    #     TERM: xterm-256color
+    - name: Build catkin workspace
+      run: /build_catkin_workspace.sh
+      shell: bash
+      env:
+        ROS_DISTRO: ${{ inputs.ros_distro }}
+        CATKIN_WORKSPACE: ${{ inputs.catkin_workspace }}
+        CATKIN_EXTEND: ${{ inputs.catkin_extend }}
+        CMAKE_BUILD_TYPE: ${{ inputs.cmake_build_type }}
+        CMAKE_ARGS: ${{ inputs.cmake_args }}
+        CATKIN_BUILD_TARGETS: ${{ inputs.catkin_build_targets }}
+        CATKIN_BUILD_ARGS: ${{ inputs.catkin_build_args }}
+        CATKIN_INSTALL: ${{ inputs.catkin_install }}
+        TERM: xterm-256color
     - name: Cleanup git config
       if: ${{ always() }}
       run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
