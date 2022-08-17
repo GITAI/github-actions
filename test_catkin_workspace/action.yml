@@ -45,18 +45,20 @@ runs:
         TERM: xterm-256color
     - name: List test results
       if: success() || failure()
+      id: list_test_results
+      continue-on-error: true
       run: |
-        find "${{ inputs.catkin_workspace }}" -iwholename "build/**/test_results/**/*.xml"
+        cd ${{ inputs.catkin_workspace }}
+        find . -iwholename "./build/*/test_results/**/*.xml" | grep .
       shell: bash
     - name: Test report
       uses: dorny/test-reporter@v1
-      if: success() || failure()
-      continue-on-error: true
+      if: (success() || failure()) && steps.list_test_results.outcome == 'success'
       with:
         name: Tests
-        path: "${{ inputs.catkin_workspace }}/build/*/test_results/**/*.xml"
+        path: "build/*/test_results/**/*.xml"
         reporter: jest-junit
-        working-directory: "${{ inputs.catkin_workspace }}/src/project"
+        working-directory: "${{ inputs.catkin_workspace }}"
     - name: Cleanup git config
       if: ${{ always() }}
       run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
