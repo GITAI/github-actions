@@ -3,6 +3,9 @@ author: Yuki Furuta
 description: Lint clang-tidy for the project
 
 inputs:
+  path:
+    description: Path to project relative from $GITHUB_WORKSPACE
+    default: .
   repository_name:
     description: Name of the repository
     default: ${{ github.event.pull_request.head.repo.name }}
@@ -20,6 +23,7 @@ runs:
   using: docker
   image: Dockerfile
   args:
+    - --working-directory=/github/workspace/${{ inputs.path }}
     - --clang-tidy
   env:
     CIRCLE_PULL_REQUEST: true
