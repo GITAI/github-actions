@@ -58,7 +58,7 @@ runs:
       with:
         name: Tests
         path: "${{ github.workspace }}/${{ inputs.catkin_workspace }}/build/*/test_results/**/*.xml"
-        reporter: jest-junit
+        reporter: java-junit
         working-directory: "${{ inputs.catkin_workspace }}/src/project"
         fail-on-error: false
     - name: Cleanup git config
