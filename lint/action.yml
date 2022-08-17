@@ -3,6 +3,9 @@ author: Yuki Furuta
 description: Lint project
 
 inputs:
+  path:
+    description: Path to project relative from $GITHUB_WORKSPACE
+    default: .
   clang_format_version:
     description: Version of clang-format used for lint
     default: ''
@@ -22,6 +25,8 @@ inputs:
 runs:
   using: docker
   image: Dockerfile
+  args:
+    - --working-directory=/github/workspace/${{ inputs.path }}
   env:
     STYLE_CLANG_FORMAT_VERSION: ${{ inputs.clang_format_version }}
     CIRCLE_PULL_REQUEST: true
