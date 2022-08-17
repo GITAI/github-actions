@@ -56,9 +56,10 @@ runs:
       if: (success() || failure()) && steps.list_test_results.outcome == 'success'
       with:
         name: Tests
-        path: "build/*/test_results/**/*.xml"
+        path: "${{ env.GITHUB_WORKSPACE }}/${{ inputs.catkin_workspace }}/build/*/test_results/**/*.xml"
         reporter: jest-junit
-        working-directory: "${{ inputs.catkin_workspace }}"
+        working-directory: "${{ inputs.catkin_workspace }}/src/project"
+        fail-on-error: false
     - name: Cleanup git config
       if: ${{ always() }}
       run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
