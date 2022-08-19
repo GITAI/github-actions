@@ -74,7 +74,8 @@ jobs:
       - name: Test load cache action
         uses: ./cache
         with:
-          method: save
+          method: load
+          key: cache_build
           path: ./foo
           bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Check cache exists
