@@ -59,7 +59,7 @@ runs:
             echo "No data found to save to ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
-          TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.tar.gz)
+          TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.tar.gz || echo)
           if [ -n "${TARGET}" ]; then
             aws s3 cp s3://${{ inputs.bucket }}/${KEY}.tar.gz - | tar -I pigz -x .
             echo "Cache were loaded from ${KEY}"
