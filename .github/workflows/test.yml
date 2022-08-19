@@ -82,4 +82,22 @@ jobs:
         shell: bash
         run: |
           cd foo
-          test $(ls -l | wc -l) -gt 0
+          test $(ls -l | wc -l) -gt 1
+      - name: Test clear cache action
+        uses: ./cache
+        with:
+          method: clear
+          key: cache_build
+          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Test load cleared cache action
+        uses: ./cache
+        with:
+          method: load
+          key: cache_build
+          path: ./bar
+          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Check cache does not exist
+        shell: bash
+        run: |
+          cd bar
+          test $(ls -l | wc -l) -eq 1
