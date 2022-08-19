@@ -37,18 +37,21 @@ runs:
         cd ${{ inputs.path }}
         KEY=${{ github.repository }}/${{ github.ref_name }}/${{ inputs.key }}
         if [ "${{ inputs.method }}" = "save" ]; then
-          TARGET=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0)
-          if [ -z "${TARGET}" ]; then
-            echo "No data found to save"
+          NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
+          if [ ${NUM_TARGETS} -gt 0 ]; then
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -I pigz -c --null -T - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.tar.gz
+            echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
           else
-            echo ${TARGET} | tar -I pigz -c --null -T - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.tar.gz
+            echo "No data found to save to ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
           TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.tar.gz)
-          if [ -z "${TARGET}" ]; then
-            echo "No cache found to load"
-          else
+          if [ -n "${TARGET}" ]; then
             aws s3 cp s3://${{ inputs.bucket }}/${KEY}.tar.gz - | tar -I pigz -x .
+            echo "Cache were loaded from ${KEY}"
+            tree -a -I .git
+          else
+            echo "No cache found to load from %{KEY}"
           fi
         else
           echo "Invalid method you have specified ${{ inputs.method }}"
