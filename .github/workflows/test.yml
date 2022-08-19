@@ -54,7 +54,7 @@ jobs:
         id: cache_build
         with:
           method: save
-          path: ./build
+          path: ./catkin_ws/build
           bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
 
   test-cache:
