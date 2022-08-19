@@ -4,11 +4,11 @@ description: Load/Save cache using cloud storage
 
 inputs:
   method:
-    description: "'load' or 'save'"
+    description: "'load', 'save' or 'clear'"
     required: true
   path:
-    description: Path to directory to load/save cache relative to $GITHUB_WORKSPACE
-    required: true
+    description: Path to directory to load/save cache relative to $GITHUB_WORKSPACE. Required for 'load' and 'save' method
+    default: ''
   bucket:
     description: Bucket name to be used in storage
     required: true
@@ -33,9 +33,23 @@ runs:
     - name: ${{ inputs.method }} cache
       shell: bash
       run: |
-        mkdir -p ${{ inputs.path }}
-        cd ${{ inputs.path }}
-        KEY=${{ github.repository }}/${{ github.ref_name }}/${{ inputs.key }}
+        PREFIX=${{ github.repository }}/${{ github.ref_name }}
+        KEY=${PREFIX}/${{ inputs.key }}
+
+        if [ "${{ inputs.method }}" = "clear" ]; then
+          if [ "${{ inputs.key }}" = "all" ]; then
+            aws s3 rm --recursive s3://${{ inputs.bucket }}/${PREFIX}
+          else
+            aws s3 rm s3://${{ inputs.bucket }}/${KEY}.tar.gz
+          fi
+          exit 0
+        fi
+
+        if [ -z "${{ inputs.path }}" ]; then
+          echo "Input parameter 'path' is empty"
+          exit 1
+        fi
+        mkdir -p ${{ inputs.path }} && cd ${{ inputs.path }}
         if [ "${{ inputs.method }}" = "save" ]; then
           NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
           if [ ${NUM_TARGETS} -gt 0 ]; then
@@ -57,4 +71,3 @@ runs:
           echo "Invalid method you have specified ${{ inputs.method }}"
           exit 1
         fi
-
