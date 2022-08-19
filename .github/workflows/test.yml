@@ -49,3 +49,36 @@ jobs:
           catkin_workspace: catkin_ws
       - name: Test lint_clang_tidy action
         uses: ./lint_clang_tidy
+      - name: Test save cache action
+        uses: ./cache
+        id: cache_build
+        with:
+          method: save
+          path: ./build
+          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+
+  test-cache:
+    name: Test cache action
+    runs-on: [self-hosted, linux, x64]
+    if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
+    needs: test
+    steps:
+      - name: Cleanup workspace
+        uses: AutoModality/action-clean@v1
+      - name: Checkout the project
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: true
+          fetch-depth: 0
+      - name: Test load cache action
+        uses: ./cache
+        with:
+          method: save
+          path: ./foo
+          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Check cache exists
+        shell: bash
+        run: |
+          cd foo
+          test $(ls -l | wc -l) -gt 0
