@@ -65,7 +65,7 @@ runs:
             echo "Cache were loaded from ${KEY}"
             tree -a -I .git
           else
-            echo "No cache found to load from %{KEY}"
+            echo "No cache found to load from ${KEY}"
           fi
         else
           echo "Invalid method you have specified ${{ inputs.method }}"
