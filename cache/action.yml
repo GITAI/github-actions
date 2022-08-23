@@ -53,6 +53,7 @@ runs:
         if [ "${{ inputs.method }}" = "save" ]; then
           NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
           if [ ${NUM_TARGETS} -gt 0 ]; then
+            symlinks -cr .
             find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -I pigz -c --null -T - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.tar.gz
             echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
           else
