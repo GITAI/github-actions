@@ -28,6 +28,7 @@ inputs:
 outputs:
   platforms:
     description: Available build target platforms
+    value: ${{ steps.setup_buildx.outputs.platforms }}
 
 runs:
   using: composite
@@ -66,7 +67,3 @@ runs:
         driver-opts: ${{ inputs.buildx_driver_opts }}
         endpoint: ${{ inputs.context }}
         config-inline: ${{ inputs.buildx_config }}
-    - name: Set output variables
-      shell: bash
-      run: |
-        echo ::set-output name=platforms::${{ steps.setup_buildx.outputs.platforms }}

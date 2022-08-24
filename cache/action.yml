@@ -22,6 +22,9 @@ inputs:
   exclude:
     description: Exclude files that matches to the parameter. Leave it blank if all files are included
     default: '.'
+  compress_level:
+    description: Compress level
+    default: 11
   storage_class:
     description: Storage class to be used in storage
     default: "ONEZONE_IA"
@@ -40,7 +43,7 @@ runs:
           if [ "${{ inputs.key }}" = "all" ]; then
             aws s3 rm --recursive s3://${{ inputs.bucket }}/${PREFIX}
           else
-            aws s3 rm s3://${{ inputs.bucket }}/${KEY}.tar.gz
+            aws s3 rm s3://${{ inputs.bucket }}/${KEY}.cache
           fi
           exit 0
         fi
@@ -54,15 +57,18 @@ runs:
           NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
           if [ ${NUM_TARGETS} -gt 0 ]; then
             symlinks -cr .
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -I pigz -c --null -T - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.tar.gz
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.cache
             echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
+            aws s3 ls s3://${{ inputs.bucket }}/${KEY}.cache
           else
             echo "No data found to save to ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
-          TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.tar.gz || echo)
+          TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.cache || echo)
           if [ -n "${TARGET}" ]; then
-            aws s3 cp s3://${{ inputs.bucket }}/${KEY}.tar.gz - | tar -I pigz -x .
+            echo "Cache found"
+            echo "${TARGET}"
+            aws s3 cp s3://${{ inputs.bucket }}/${KEY}.cache - | zstd -d -T0 - | tar -x .
             echo "Cache were loaded from ${KEY}"
             tree -a -I .git
           else
