@@ -15,8 +15,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Cleanup workspace
-        uses: AutoModality/action-clean@v1
       - name: Checkout the project
         uses: actions/checkout@v3
         with:
@@ -63,8 +61,6 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     needs: test
     steps:
-      - name: Cleanup workspace
-        uses: AutoModality/action-clean@v1
       - name: Checkout the project
         uses: actions/checkout@v3
         with:
@@ -101,3 +97,34 @@ jobs:
         run: |
           cd bar
           test $(ls -l | wc -l) -eq 1
+
+  test-docker:
+    name: Test setup_docker action
+    runs-on: [self-hosted, linux, x64]
+    if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout the project
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: true
+          fetch-depth: 0
+      - name: Create Dockerfile for testing
+        shell: bash
+        run: |
+          cat <<EOF > Dockerfile
+          FROM alpine
+          RUN uname -a
+          EOF
+      - name: Setup docker
+        id: setup_docker
+        uses: ./setup_docker
+      - name: Check output variables
+        shell: bash
+        run: echo "${{ steps.setup_docker.outputs.platforms }}" | grep linux
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          pull: true
+          platforms: linux/amd64,linux/arm64

@@ -1,0 +1,72 @@
+name: Setup docker
+author: Yuki Furuta
+description: Setup docker building environment
+
+inputs:
+  context:
+    description: Name of docker context
+    required: false
+    default: default
+  setup_qemu:
+    description: Enables multi architecture build
+    required: false
+    default: true
+  setup_buildx:
+    description: Enables docker buildx
+    required: false
+    default: true
+  buildx_version:
+    description: Buildx version. (eg. v0.3.0)
+    required: false
+  buildx_driver_opts:
+    description: List of additional driver-specific options. (eg. image=moby/buildkit:master)
+    required: false
+  buildx_config:
+    description: Buildx config
+    required: false
+
+outputs:
+  platforms:
+    description: Available build target platforms
+
+runs:
+  using: composite
+  steps:
+    - name: Setup docker context
+      shell: bash
+      run: |
+        if ! docker context inspect ${{ inputs.context }} 1>/dev/null; then
+          echo "Docker context ${{ inputs.context }} is being created"
+          DOCKER_CONTEXT_ARGS=
+          if [ -n "${DOCKER_HOST}" ]; then
+            DOCKER_CONTEXT_ARGS="host=${DOCKER_HOST}"
+          else
+            DOCKER_CONTEXT_ARGS="host=unix:///var/run/docker.sock"
+          fi
+          if [ -n "${DOCKER_CERT_PATH}" ]; then
+            DOCKER_CONTEXT_ARGS="${DOCKER_CONTEXT_ARGS},ca=${DOCKER_CERT_PATH}/ca.pem,cert=${DOCKER_CERT_PATH}/cert.pem,key=${DOCKER_CERT_PATH}/key.pem"
+          fi
+          if [ "${DOCKER_TLS_VERIFY}" = "0" ]; then
+            DOCKER_CONTEXT_ARGS="${DOCKER_CONTEXT_ARGS},skip-tls-verify=1"
+          fi
+          echo docker context create ${{ inputs.context }} --docker "${DOCKER_CONTEXT_ARGS}"
+          docker context create ${{ inputs.context }} --docker "${DOCKER_CONTEXT_ARGS}"
+        fi
+        unset DOCKER_HOST
+        docker context use ${{ inputs.context }}
+    - name: Setup QEMU
+      if: inputs.setup_qemu
+      uses: docker/setup-qemu-action@v1
+    - name: Setup docker buildx
+      if: inputs.setup_buildx
+      uses: docker/setup-buildx-action@v1
+      id: setup_buildx
+      with:
+        version: ${{ inputs.buildx_version }}
+        driver-opts: ${{ inputs.buildx_driver_opts }}
+        endpoint: ${{ inputs.context }}
+        config-inline: ${{ inputs.buildx_config }}
+    - name: Set output variables
+      shell: bash
+      run: |
+        echo ::set-output name=platforms::${{ steps.setup_buildx.outputs.platforms }}
