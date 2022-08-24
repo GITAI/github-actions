@@ -66,4 +66,5 @@ runs:
         version: ${{ inputs.buildx_version }}
         driver-opts: ${{ inputs.buildx_driver_opts }}
         endpoint: ${{ inputs.context }}
+        config: /etc/buildkit/buildkitd.toml
         config-inline: ${{ inputs.buildx_config }}
