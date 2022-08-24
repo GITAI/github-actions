@@ -59,12 +59,15 @@ runs:
             symlinks -cr .
             find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.cache
             echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
+            aws s3 ls s3://${{ inputs.bucket }}/${KEY}.cache
           else
             echo "No data found to save to ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
           TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.cache || echo)
           if [ -n "${TARGET}" ]; then
+            echo "Cache found"
+            echo "${TARGET}"
             aws s3 cp s3://${{ inputs.bucket }}/${KEY}.cache - | zstd -d -T0 - | tar -x .
             echo "Cache were loaded from ${KEY}"
             tree -a -I .git
