@@ -47,6 +47,8 @@ jobs:
           catkin_workspace: catkin_ws
       - name: Test lint_clang_tidy action
         uses: ./lint_clang_tidy
+        with:
+          path: catkin_ws/clang-tidy-results
       - name: Test save cache action
         uses: ./cache
         id: cache_build
