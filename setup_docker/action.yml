@@ -6,7 +6,7 @@ inputs:
   context:
     description: Name of docker context
     required: false
-    default: default
+    default: github-actions
   setup_qemu:
     description: Enables multi architecture build
     required: false
