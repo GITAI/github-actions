@@ -39,7 +39,16 @@ inputs:
   catkin_install:
     description: Enable catkin install workspace
     default: true
-  
+  # cache
+  cache_build_space:
+    description: Enable caching catkin build space
+    default: false
+  cache_devel_space:
+    description: Enable caching devel workspace
+    default: false
+  cache_bucket:
+    description: Bucket name to use for uploading/downloading cache
+    default: ''
 
 runs:
   using: composite
@@ -57,6 +66,22 @@ runs:
         ccache -o compression=true
         ccache -o sloppiness=file_macro,time_macros
       shell: bash
+    - name: Load build cache
+      if: ${{ inputs.cache_build_space != 'false' }}
+      uses: GITAI/github-actions/cache@main
+      with:
+        method: load
+        key: cache_build_space
+        path: ${{ inputs.catkin_workspace }}/build
+        bucket: ${{ inputs.cache_bucket }}
+    - name: Load devel cache
+      if: ${{ inputs.cache_devel_space != 'false' }}
+      uses: GITAI/github-actions/cache@main
+      with:
+        method: load
+        key: cache_devel_space
+        path: ${{ inputs.catkin_workspace }}/devel
+        bucket: ${{ inputs.cache_bucket }}
     - name: Build catkin workspace
       run: /build_catkin_workspace.sh
       shell: bash
@@ -70,6 +95,22 @@ runs:
         CATKIN_BUILD_ARGS: ${{ inputs.catkin_build_args }}
         CATKIN_INSTALL: ${{ inputs.catkin_install }}
         TERM: xterm-256color
+    - name: Save build cache
+      if: ${{ inputs.cache_build_space != 'false' }}
+      id: cache_build_space
+      uses: GITAI/github-actions/cache@main
+      with:
+        method: save
+        path: ${{ inputs.catkin_workspace }}/build
+        bucket: ${{ inputs.cache_bucket }}
+    - name: Save devel cache
+      if: ${{ inputs.cache_devel_space != 'false' }}
+      id: cache_devel_space
+      uses: GITAI/github-actions/cache@main
+      with:
+        method: save
+        path: ${{ inputs.catkin_workspace }}/devel
+        bucket: ${{ inputs.cache_bucket }}
     - name: Cleanup git config
       if: ${{ always() }}
       run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
