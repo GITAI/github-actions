@@ -19,8 +19,9 @@ inputs:
     description: Buildx version. (eg. v0.3.0)
     required: false
   buildx_driver_opts:
-    description: List of additional driver-specific options. (eg. image=moby/buildkit:master)
+    description: List of additional driver-specific options. (eg. network=host image=moby/buildkit:master)
     required: false
+    default: network=host
   buildx_config:
     description: Buildx config
     required: false
