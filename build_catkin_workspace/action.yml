@@ -43,9 +43,15 @@ inputs:
   cache_build_space:
     description: Enable caching catkin build space
     default: false
+  cache_build_space_id:
+    description: Id for build space cache
+    default: '${{ github.action }}_build'
   cache_devel_space:
     description: Enable caching devel workspace
     default: false
+  cache_devel_space_id:
+    description: Id for devel space cache
+    default: '${{ github.action }}_devel'
   cache_bucket:
     description: Bucket name to use for uploading/downloading cache
     default: ''
@@ -71,7 +77,7 @@ runs:
       uses: GITAI/github-actions/cache@main
       with:
         method: load
-        key: cache_build_space
+        key: ${{ inputs.cache_build_space_id }}
         path: ${{ inputs.catkin_workspace }}/build
         bucket: ${{ inputs.cache_bucket }}
     - name: Load devel cache
@@ -79,7 +85,7 @@ runs:
       uses: GITAI/github-actions/cache@main
       with:
         method: load
-        key: cache_devel_space
+        key: ${{ inputs.cache_devel_space_id }}
         path: ${{ inputs.catkin_workspace }}/devel
         bucket: ${{ inputs.cache_bucket }}
     - name: Build catkin workspace
@@ -101,6 +107,7 @@ runs:
       uses: GITAI/github-actions/cache@main
       with:
         method: save
+        key: ${{ inputs.cache_build_space_id }}
         path: ${{ inputs.catkin_workspace }}/build
         bucket: ${{ inputs.cache_bucket }}
     - name: Save devel cache
@@ -109,6 +116,7 @@ runs:
       uses: GITAI/github-actions/cache@main
       with:
         method: save
+        key: ${{ inputs.cache_devel_space_id }}
         path: ${{ inputs.catkin_workspace }}/devel
         bucket: ${{ inputs.cache_bucket }}
     - name: Cleanup git config
