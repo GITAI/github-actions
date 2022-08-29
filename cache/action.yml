@@ -42,7 +42,7 @@ runs:
         echo KEY=${KEY} | tee -a $GITHUB_ENV
         
     - name: ${{ inputs.method }} cache (local)
-      if: startsWith(inputs.remote_path, 's3://') != true
+      if: ${{ ! startsWith(inputs.remote_path, 's3://') }}
       shell: bash
       run: |
         if [ "${{ inputs.method }}" = "clear" ]; then
@@ -61,10 +61,10 @@ runs:
             symlinks -cr .
             mkdir -p $(dirname "${{ inputs.remote_path }}/${KEY}.cache")
             find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 ${{ inputs.remote_path }}/${KEY}.cache
-            echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
+            echo "${NUM_TARGETS} files/directories were saved to local ${KEY}"
             ls -l ${{ inputs.remote_path }}/${KEY}.cache
           else
-            echo "No data found to save to ${KEY}"
+            echo "No data found to save to local ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
           TARGET=$(ls -l ${{ inputs.remote_path }}/${KEY}.cache 2>/dev/null || echo)
@@ -75,7 +75,7 @@ runs:
             echo "Cache were loaded from ${KEY}"
             tree -a -I .git
           else
-            echo "No cache found to load from ${KEY}"
+            echo "No local cache found to load from ${KEY}"
           fi
         else
           echo "Invalid method you have specified ${{ inputs.method }}"
@@ -83,7 +83,7 @@ runs:
         fi
 
     - name: ${{ inputs.method }} cache (S3)
-      if: startsWith(inputs.remote_path, 's3://') == true
+      if: ${{ startsWith(inputs.remote_path, 's3://') }}
       shell: bash
       run: |
         if [ "${{ inputs.method }}" = "clear" ]; then
