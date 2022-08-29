@@ -40,9 +40,6 @@ inputs:
     description: Enable catkin install workspace
     default: true
   # cache
-  cache_build_space:
-    description: Enable caching catkin build space
-    default: false
   cache_build_space_id:
     description: Id for build space cache
     default: '${{ github.action }}_build'
@@ -52,8 +49,8 @@ inputs:
   cache_devel_space_id:
     description: Id for devel space cache
     default: '${{ github.action }}_devel'
-  cache_bucket:
-    description: Bucket name to use for uploading/downloading cache
+  cache_remote_path:
+    description: Remote path to use for uploading/downloading cache
     default: ''
 
 runs:
@@ -79,7 +76,7 @@ runs:
         method: load
         key: ${{ inputs.cache_build_space_id }}
         path: ${{ inputs.catkin_workspace }}/build
-        bucket: ${{ inputs.cache_bucket }}
+        remote_path: ${{ inputs.cache_remote_path }}
     - name: Load devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
       uses: GITAI/github-actions/cache@main
@@ -87,7 +84,7 @@ runs:
         method: load
         key: ${{ inputs.cache_devel_space_id }}
         path: ${{ inputs.catkin_workspace }}/devel
-        bucket: ${{ inputs.cache_bucket }}
+        remote_path: ${{ inputs.cache_remote_path }}
     - name: Build catkin workspace
       run: /build_catkin_workspace.sh
       shell: bash
@@ -109,7 +106,7 @@ runs:
         method: save
         key: ${{ inputs.cache_build_space_id }}
         path: ${{ inputs.catkin_workspace }}/build
-        bucket: ${{ inputs.cache_bucket }}
+        remote_path: ${{ inputs.cache_remote_path }}
     - name: Save devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
       id: cache_devel_space
@@ -118,7 +115,7 @@ runs:
         method: save
         key: ${{ inputs.cache_devel_space_id }}
         path: ${{ inputs.catkin_workspace }}/devel
-        bucket: ${{ inputs.cache_bucket }}
+        remote_path: ${{ inputs.cache_remote_path }}
     - name: Cleanup git config
       if: ${{ always() }}
       run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"

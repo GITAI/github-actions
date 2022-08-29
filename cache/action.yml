@@ -9,8 +9,8 @@ inputs:
   path:
     description: Path to directory to load/save cache relative to $GITHUB_WORKSPACE. Required for 'load' and 'save' method
     default: ''
-  bucket:
-    description: Bucket name to be used in storage
+  remote_path:
+    description: Path to remote storage. (i.e. s3://target-bucket, /_local/_path)
     required: true
   key:
     description: Key to the cache (id of the save action). Required for load method
@@ -33,17 +33,61 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: ${{ inputs.method }} cache
+    - name: Set variable
+      run: |
+        PREFIX=${{ github.repository }}/${{ github.ref_name }} >> $GITHUB_ENV
+        KEY=${PREFIX}/${{ inputs.key }} >> $GITHUB_ENV
+        
+    - name: ${{ inputs.method }} cache (local)
+      if: ! startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
-        PREFIX=${{ github.repository }}/${{ github.ref_name }}
-        KEY=${PREFIX}/${{ inputs.key }}
+        if [ "${{ inputs.method }}" = "clear" ]; then
+          echo "Clearing local cache is not supported for security reason"
+          exit 1
+        fi
 
+        if [ -z "${{ inputs.path }}" ]; then
+          echo "Input parameter 'path' is empty"
+          exit 1
+        fi
+        mkdir -p ${{ inputs.path }} && cd ${{ inputs.path }}
+        if [ "${{ inputs.method }}" = "save" ]; then
+          NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
+          if [ ${NUM_TARGETS} -gt 0 ]; then
+            symlinks -cr .
+            mkdir -p $(dirname "${{ inputs.remote_path }}/${KEY}.cache")
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 ${{ inputs.remote_path }}/${KEY}.cache
+            echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
+            ls -l ${{ inputs.remote_path }}/${KEY}.cache
+          else
+            echo "No data found to save to ${KEY}"
+          fi
+        elif [ "${{ inputs.method }}" = "load" ]; then
+          TARGET=$(ls -l ${{ inputs.remote_path }}/${KEY}.cache 2>/dev/null || echo)
+          if [ -n "${TARGET}" ]; then
+            echo "Cache found"
+            echo "${TARGET}"
+            cat ${{ inputs.remote_path }}/${KEY}.cache | zstd -d -T0 - | tar -x .
+            echo "Cache were loaded from ${KEY}"
+            tree -a -I .git
+          else
+            echo "No cache found to load from ${KEY}"
+          fi
+        else
+          echo "Invalid method you have specified ${{ inputs.method }}"
+          exit 1
+        fi
+
+    - name: ${{ inputs.method }} cache (S3)
+      if: startsWith(inputs.remote_path, 's3://')
+      shell: bash
+      run: |
         if [ "${{ inputs.method }}" = "clear" ]; then
           if [ "${{ inputs.key }}" = "all" ]; then
-            aws s3 rm --recursive s3://${{ inputs.bucket }}/${PREFIX}
+            aws s3 rm --recursive ${{ inputs.remote_path }}/${PREFIX}
           else
-            aws s3 rm s3://${{ inputs.bucket }}/${KEY}.cache
+            aws s3 rm ${{ inputs.remote_path }}/${KEY}.cache
           fi
           exit 0
         fi
@@ -57,18 +101,18 @@ runs:
           NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
           if [ ${NUM_TARGETS} -gt 0 ]; then
             symlinks -cr .
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - s3://${{ inputs.bucket }}/${KEY}.cache
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - ${{ inputs.remote_path }}/${KEY}.cache
             echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
-            aws s3 ls s3://${{ inputs.bucket }}/${KEY}.cache
+            aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache
           else
             echo "No data found to save to ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
-          TARGET=$(aws s3 ls s3://${{ inputs.bucket }}/${KEY}.cache || echo)
+          TARGET=$(aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache || echo)
           if [ -n "${TARGET}" ]; then
             echo "Cache found"
             echo "${TARGET}"
-            aws s3 cp s3://${{ inputs.bucket }}/${KEY}.cache - | zstd -d -T0 - | tar -x .
+            aws s3 cp ${{ inputs.remote_path }}/${KEY}.cache - | zstd -d -T0 - | tar -x .
             echo "Cache were loaded from ${KEY}"
             tree -a -I .git
           else

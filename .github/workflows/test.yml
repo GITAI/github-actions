@@ -55,7 +55,7 @@ jobs:
         with:
           method: save
           path: ./catkin_ws/build
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
 
   test-cache:
     name: Test cache action
@@ -75,7 +75,7 @@ jobs:
           method: load
           key: cache_build
           path: ./foo
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Check cache exists
         shell: bash
         run: |
@@ -86,14 +86,14 @@ jobs:
         with:
           method: clear
           key: cache_build
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Test load cleared cache action
         uses: ./cache
         with:
           method: load
           key: cache_build
           path: ./bar
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Check cache does not exist
         shell: bash
         run: |
