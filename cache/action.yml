@@ -40,7 +40,7 @@ runs:
         KEY=${PREFIX}/${{ inputs.key }} >> $GITHUB_ENV
         
     - name: ${{ inputs.method }} cache (local)
-      if: ! startsWith(inputs.remote_path, 's3://')
+      if: startsWith(inputs.remote_path, 's3://') != true
       shell: bash
       run: |
         if [ "${{ inputs.method }}" = "clear" ]; then
@@ -81,7 +81,7 @@ runs:
         fi
 
     - name: ${{ inputs.method }} cache (S3)
-      if: startsWith(inputs.remote_path, 's3://')
+      if: startsWith(inputs.remote_path, 's3://') == true
       shell: bash
       run: |
         if [ "${{ inputs.method }}" = "clear" ]; then
