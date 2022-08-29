@@ -36,8 +36,10 @@ runs:
     - name: Set variable
       shell: bash
       run: |
-        PREFIX=${{ github.repository }}/${{ github.ref_name }} >> $GITHUB_ENV
-        KEY=${PREFIX}/${{ inputs.key }} >> $GITHUB_ENV
+        PREFIX=${{ github.repository }}/${{ github.ref_name }}
+        KEY=${PREFIX}/${{ inputs.key }}
+        echo PREFIX=${PREFIX} | tee -a $GITHUB_ENV
+        echo KEY=${KEY} | tee -a $GITHUB_ENV
         
     - name: ${{ inputs.method }} cache (local)
       if: startsWith(inputs.remote_path, 's3://') != true
