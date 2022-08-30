@@ -82,6 +82,7 @@ jobs:
         run: |
           cd foo
           test $(ls -l | wc -l) -gt 1
+
       - name: Test clear cache action
         uses: ./cache
         with:
@@ -100,6 +101,26 @@ jobs:
         run: |
           cd bar
           test $(ls -l | wc -l) -eq 1
+
+      - name: Test save local cache action
+        uses: ./cache
+        id: local_cache
+        with:
+          method: save
+          path: ./foo
+          remote_path: /_local
+      - name: Test load local cache action
+        uses: ./cache
+        with:
+          method: load
+          key: local_cache
+          path: ./baz
+          remote_path: /_local
+      - name: Check local cache exists
+        shell: bash
+        run: |
+          cd baz
+          test $(ls -l | wc -l) -gt 1
 
   test-docker:
     name: Test setup_docker action
