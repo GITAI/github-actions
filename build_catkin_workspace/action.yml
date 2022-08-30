@@ -40,12 +40,15 @@ inputs:
     description: Enable catkin install workspace
     default: true
   # cache
+  cache_build_space:
+    description: Enable caching build workspace
+    default: true
   cache_build_space_id:
     description: Id for build space cache
     default: '${{ github.action }}_build'
   cache_devel_space:
     description: Enable caching devel workspace
-    default: false
+    default: true
   cache_devel_space_id:
     description: Id for devel space cache
     default: '${{ github.action }}_devel'
