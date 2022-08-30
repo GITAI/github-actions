@@ -42,7 +42,7 @@ runs:
         echo KEY=${KEY} | tee -a $GITHUB_ENV
         
     - name: ${{ inputs.method }} cache (local)
-      if: ${{ ! startsWith(inputs.remote_path, 's3://') }}
+      if: inputs.remote_path && ! startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
         if [ "${{ inputs.method }}" = "clear" ]; then
@@ -83,7 +83,7 @@ runs:
         fi
 
     - name: ${{ inputs.method }} cache (S3)
-      if: ${{ startsWith(inputs.remote_path, 's3://') }}
+      if: inputs.remote_path && startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
         if [ "${{ inputs.method }}" = "clear" ]; then

@@ -41,6 +41,7 @@ jobs:
         uses: ./build_catkin_workspace
         with:
           catkin_workspace: catkin_ws
+          cache_remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Test test_catkin_workspace action
         uses: ./test_catkin_workspace
         with:
