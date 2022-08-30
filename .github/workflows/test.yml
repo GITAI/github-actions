@@ -41,6 +41,7 @@ jobs:
         uses: ./build_catkin_workspace
         with:
           catkin_workspace: catkin_ws
+          cache_remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Test test_catkin_workspace action
         uses: ./test_catkin_workspace
         with:
@@ -55,7 +56,7 @@ jobs:
         with:
           method: save
           path: ./catkin_ws/build
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
 
   test-cache:
     name: Test cache action
@@ -75,30 +76,51 @@ jobs:
           method: load
           key: cache_build
           path: ./foo
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Check cache exists
         shell: bash
         run: |
           cd foo
           test $(ls -l | wc -l) -gt 1
+
       - name: Test clear cache action
         uses: ./cache
         with:
           method: clear
           key: cache_build
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Test load cleared cache action
         uses: ./cache
         with:
           method: load
           key: cache_build
           path: ./bar
-          bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Check cache does not exist
         shell: bash
         run: |
           cd bar
           test $(ls -l | wc -l) -eq 1
+
+      - name: Test save local cache action
+        uses: ./cache
+        id: local_cache
+        with:
+          method: save
+          path: ./foo
+          remote_path: /_local
+      - name: Test load local cache action
+        uses: ./cache
+        with:
+          method: load
+          key: local_cache
+          path: ./baz
+          remote_path: /_local
+      - name: Check local cache exists
+        shell: bash
+        run: |
+          cd baz
+          test $(ls -l | wc -l) -gt 1
 
   test-docker:
     name: Test setup_docker action
