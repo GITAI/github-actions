@@ -71,7 +71,7 @@ runs:
       shell: bash
     - name: Load build cache
       if: ${{ inputs.cache_build_space != 'false' }}
-      uses: GITAI/github-actions/cache@local-cache
+      uses: GITAI/github-actions/cache@main
       with:
         method: load
         key: ${{ inputs.cache_build_space_id }}
@@ -79,7 +79,7 @@ runs:
         remote_path: ${{ inputs.cache_remote_path }}
     - name: Load devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
-      uses: GITAI/github-actions/cache@local-cache
+      uses: GITAI/github-actions/cache@main
       with:
         method: load
         key: ${{ inputs.cache_devel_space_id }}
@@ -101,7 +101,7 @@ runs:
     - name: Save build cache
       if: ${{ inputs.cache_build_space != 'false' }}
       id: cache_build_space
-      uses: GITAI/github-actions/cache@local-cache
+      uses: GITAI/github-actions/cache@main
       with:
         method: save
         key: ${{ inputs.cache_build_space_id }}
@@ -110,7 +110,7 @@ runs:
     - name: Save devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
       id: cache_devel_space
-      uses: GITAI/github-actions/cache@local-cache
+      uses: GITAI/github-actions/cache@main
       with:
         method: save
         key: ${{ inputs.cache_devel_space_id }}
