@@ -60,7 +60,8 @@ runs:
           if [ ${NUM_TARGETS} -gt 0 ]; then
             symlinks -cr .
             mkdir -p $(dirname "${{ inputs.remote_path }}/${KEY}.cache")
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${KEY}.cache
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${KEY}.cache.new
+            mv -f ${{ inputs.remote_path }}/${KEY}.cache.new ${{ inputs.remote_path }}/${KEY}.cache
             echo "${NUM_TARGETS} files/directories were saved to local ${KEY}"
             ls -l ${{ inputs.remote_path }}/${KEY}.cache
           else
