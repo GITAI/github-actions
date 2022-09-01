@@ -1,6 +1,9 @@
 name: Test actions
 
 on:
+  push:
+    branches:
+      - main
   pull_request_target:
     types:
       - labeled

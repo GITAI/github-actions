@@ -25,6 +25,7 @@ runs:
   args:
     - --working-directory=/github/workspace/${{ inputs.path }}
     - --clang-tidy
+    - --clang-tidy-yaml-dir=/github/workspace/clang-tidy-results
   env:
     CIRCLE_PULL_REQUEST: true
     CIRCLE_PROJECT_USERNAME: ${{ inputs.user }}
