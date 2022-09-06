@@ -60,6 +60,12 @@ jobs:
           method: save
           path: ./catkin_ws/build
           remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Setup ssh session
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 10
+        with:
+          limit-access-to-actor: true
 
   test-cache:
     name: Test cache action
@@ -124,6 +130,12 @@ jobs:
         run: |
           cd baz
           test $(ls -l | wc -l) -gt 1
+      - name: Setup ssh session
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 10
+        with:
+          limit-access-to-actor: true
 
   test-docker:
     name: Test setup_docker action
@@ -155,3 +167,9 @@ jobs:
           context: .
           pull: true
           platforms: linux/amd64,linux/arm64
+      - name: Setup ssh session
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 10
+        with:
+          limit-access-to-actor: true
