@@ -61,6 +61,11 @@ runs:
   steps:
     - name: Setup git config
       run: |
+        [[ "$(which findutils)" = "" ]] && apt-get install -qq -y findutils
+        [[ "$(which git)" = "" ]] && apt-get install -qq -y git
+        [[ "$(which ssh)" = "" ]] && apt-get install -qq -y ssh
+        git config --name-only --get-regexp url. | xargs -I% git config --global --unset-all % || true
+        git config --unset-all http.https://github.com/.extraheader || true
         git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git://github.com/"
         git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git@github.com:"
         git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "https://github.com/"
@@ -68,6 +73,7 @@ runs:
       shell: bash
     - name: Setup ccache
       run: |
+        [[ "$(which ccache)" = "" ]] && apt-get install -qq -y ccache
         ccache -M ${{ inputs.ccache_storage_size }}
         ccache -o compression=true
         ccache -o sloppiness=file_macro,time_macros

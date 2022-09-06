@@ -40,11 +40,13 @@ runs:
         KEY=${PREFIX}/${{ inputs.key }}
         echo PREFIX=${PREFIX} | tee -a $GITHUB_ENV
         echo KEY=${KEY} | tee -a $GITHUB_ENV
-        
     - name: ${{ inputs.method }} cache (local)
       if: inputs.remote_path && ! startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
+        [[ "$(which zstd)" = "" ]] && apt-get install -qq -y zstd
+        [[ "$(which tree)" = "" ]] && apt-get install -qq -y tree
+
         if [ "${{ inputs.method }}" = "clear" ]; then
           echo "Clearing local cache is not supported for security reason"
           exit 1
@@ -82,11 +84,23 @@ runs:
           echo "Invalid method you have specified ${{ inputs.method }}"
           exit 1
         fi
-
     - name: ${{ inputs.method }} cache (S3)
       if: inputs.remote_path && startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
+        [[ "$(which zstd)" = "" ]] && apt-get install -qq -y zstd
+        [[ "$(which tree)" = "" ]] && apt-get install -qq -y tree
+        [[ "$(which symlinks)" = "" ]] && apt-get install -qq -y symlinks
+        if [[ "%(which pip)" = "" ]]; then
+          apt-get install -qq -y python3-pip python-is-python3
+          update-alternatives --install /usr/bin/pip pip "$(realpath $(which pip3))" 3
+        fi
+        if [[ "$(which aws)" = "" ]]; then
+          [[ "$(which curl)" = "" ]] && apt-get install -qq -y curl
+          [[ "$(which unzip)" = "" ]] && apt-get install -qq -y unzip
+          ( ( curl -o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" && unzip awscliv2.zip -d /tmp/ && /tmp/aws/install && rm -f awscliv2.zip ) || pip install --no-cache-dir awscli )
+        fi
+
         if [ "${{ inputs.method }}" = "clear" ]; then
           if [ "${{ inputs.key }}" = "all" ]; then
             aws s3 rm --recursive ${{ inputs.remote_path }}/${PREFIX}
