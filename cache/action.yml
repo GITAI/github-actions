@@ -25,6 +25,16 @@ inputs:
   compress_level:
     description: Compress level
     default: 11
+  # parameters for AWS
+  aws_access_key_id:
+    description: AWS Access key ID
+    default: ''
+  aws_secret_access_key:
+    description: AWS Secret access key
+    default: ''
+  aws_region:
+    description: AWS region
+    default: ''
   storage_class:
     description: Storage class to be used in storage
     default: "ONEZONE_IA"
@@ -84,13 +94,10 @@ runs:
           echo "Invalid method you have specified ${{ inputs.method }}"
           exit 1
         fi
-    - name: ${{ inputs.method }} cache (S3)
+    - name: Setup AWS tools
       if: inputs.remote_path && startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
-        [[ "$(which zstd)" = "" ]] && apt-get install -qq -y zstd
-        [[ "$(which tree)" = "" ]] && apt-get install -qq -y tree
-        [[ "$(which symlinks)" = "" ]] && apt-get install -qq -y symlinks
         if [[ "%(which pip)" = "" ]]; then
           apt-get install -qq -y python3-pip python-is-python3
           update-alternatives --install /usr/bin/pip pip "$(realpath $(which pip3))" 3
@@ -100,6 +107,20 @@ runs:
           [[ "$(which unzip)" = "" ]] && apt-get install -qq -y unzip
           ( ( curl -o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" && unzip awscliv2.zip -d /tmp/ && /tmp/aws/install && rm -f awscliv2.zip ) || pip install --no-cache-dir awscli )
         fi
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      if: inputs.remote_path && startsWith(inputs.remote_path, 's3://') && (inputs.aws_access_key_id || inputs.aws_secret_access_key || inputs.aws_region)
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.aws_region }}
+    - name: ${{ inputs.method }} cache (S3)
+      if: inputs.remote_path && startsWith(inputs.remote_path, 's3://')
+      shell: bash
+      run: |
+        [[ "$(which zstd)" = "" ]] && apt-get install -qq -y zstd
+        [[ "$(which tree)" = "" ]] && apt-get install -qq -y tree
+        [[ "$(which symlinks)" = "" ]] && apt-get install -qq -y symlinks
 
         if [ "${{ inputs.method }}" = "clear" ]; then
           if [ "${{ inputs.key }}" = "all" ]; then
