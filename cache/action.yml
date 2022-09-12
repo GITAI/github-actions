@@ -70,7 +70,10 @@ runs:
         if [ "${{ inputs.method }}" = "save" ]; then
           NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
           if [ ${NUM_TARGETS} -gt 0 ]; then
-            symlinks -cr .
+            symlinks -cr . 1>/tmp/symlinks.log
+            if [[ -n "${RUNNER_DEBUG}" ]]; then
+              cat /tmp/symlinks.log
+            fi
             mkdir -p $(dirname "${{ inputs.remote_path }}/${KEY}.cache")
             find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${KEY}.cache.new
             mv -f ${{ inputs.remote_path }}/${KEY}.cache.new ${{ inputs.remote_path }}/${KEY}.cache
@@ -86,7 +89,9 @@ runs:
             echo "${TARGET}"
             cat ${{ inputs.remote_path }}/${KEY}.cache | zstd -d -T0 - | tar -x .
             echo "Cache were loaded from ${KEY}"
-            tree -a -I .git
+            if [[ -n "${RUNNER_DEBUG}" ]]; then
+              tree -a -I .git
+            fi
           else
             echo "No local cache found to load from ${KEY}"
           fi
@@ -139,7 +144,10 @@ runs:
         if [ "${{ inputs.method }}" = "save" ]; then
           NUM_TARGETS=$(find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' | wc -l)
           if [ ${NUM_TARGETS} -gt 0 ]; then
-            symlinks -cr .
+            symlinks -cr . 1>/tmp/symlinks.log
+            if [[ -n "${RUNNER_DEBUG}" ]]; then
+              cat /tmp/symlinks.log
+            fi
             find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - ${{ inputs.remote_path }}/${KEY}.cache
             echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
             aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache
@@ -153,7 +161,9 @@ runs:
             echo "${TARGET}"
             aws s3 cp ${{ inputs.remote_path }}/${KEY}.cache - | zstd -d -T0 - | tar -x .
             echo "Cache were loaded from ${KEY}"
-            tree -a -I .git
+            if [[ -n "${RUNNER_DEBUG}" ]]; then
+              tree -a -I .git
+            fi
           else
             echo "No cache found to load from ${KEY}"
           fi
