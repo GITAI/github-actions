@@ -115,6 +115,7 @@ runs:
         method: save
         key: ${{ inputs.cache_build_space_id }}
         path: ${{ inputs.catkin_workspace }}/build
+        exclude: '**/test_results/**'
         remote_path: ${{ inputs.cache_remote_path }}
     - name: Save devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
