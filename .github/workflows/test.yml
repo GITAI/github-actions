@@ -17,6 +17,9 @@ jobs:
     name: Test actions
     runs-on: [self-hosted, linux, x64]
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout the project
         uses: actions/checkout@v3
@@ -27,7 +30,6 @@ jobs:
       - name: Test lint action
         uses: ./lint
       - name: Setup catkin workspace with a sample package
-        shell: bash
         run: |
           mkdir -p catkin_ws/src
           cd catkin_ws/src
@@ -38,16 +40,44 @@ jobs:
         uses: ./setup_catkin_workspace
         with:
           catkin_workspace: catkin_ws
+      - name: Make trivial changes to C++ codes
+        run: |
+          cd catkin_ws/src/project
+          find . -name '*.cpp' | xargs -I{} sed -i -E 's/Copyright/COPYRIGHT/g' {}
+          git add .
+          git config user.name "GITAI"
+          git config user.email admin@gitai.tech
+          git commit -m "trivial commit"
       - name: Test build_catkin_workspace action
         uses: ./build_catkin_workspace
         with:
           catkin_workspace: catkin_ws
           cache_remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
-      - name: Test test_catkin_workspace action
+      - name: Test test_catkin_workspace action (failure)
         uses: ./test_catkin_workspace
         with:
           catkin_workspace: catkin_ws
-      - name: Test lint_clang_tidy action
+          catkin_test_targets: tf2_ros
+        continue-on-error: true
+      - name: Make changes to pass tests
+        run: |
+          cd catkin_ws/src/geometry2/tf2_ros
+          sed -i 's@add_rostest(test/transform_listener_time_reset_test.launch)@@g' CMakeLists.txt
+      - name: Test test_catkin_workspace action (success)
+        uses: ./test_catkin_workspace
+        with:
+          catkin_workspace: catkin_ws
+          catkin_test_targets: tf2_ros
+      - name: Test lint_clang_tidy action (failure)
+        uses: ./lint_clang_tidy
+        with:
+          path: catkin_ws/clang-tidy-results
+        continue-on-error: true
+      - name: Make changes to pass tests
+        run: |
+          cd catkin_ws/src/project
+          echo '*.cpp' >> .lintignore
+      - name: Test lint_clang_tidy action (success)
         uses: ./lint_clang_tidy
         with:
           path: catkin_ws/clang-tidy-results
