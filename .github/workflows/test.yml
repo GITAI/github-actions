@@ -108,6 +108,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           submodules: true
           fetch-depth: 0
+      - name: Test check cache action
+        id: check_cache_exists
+        uses: ./cache
+        with:
+          method: check
+          key: cache_build
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Test load cache action
         uses: ./cache
         with:
@@ -120,11 +127,19 @@ jobs:
         run: |
           cd foo
           test $(ls -l | wc -l) -gt 1
+          test -n "${{ steps.check_cache_exists.outputs.remote_path_exists }}"
 
       - name: Test clear cache action
         uses: ./cache
         with:
           method: clear
+          key: cache_build
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Test check cleared cache action
+        id: check_cache_not_exists
+        uses: ./cache
+        with:
+          method: check
           key: cache_build
           remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Test load cleared cache action
@@ -139,6 +154,7 @@ jobs:
         run: |
           cd bar
           test $(ls -l | wc -l) -eq 1
+          test -z "${{ steps.check_cache_not_exists.outputs.remote_path_exists }}"
 
       - name: Test save local cache action
         uses: ./cache

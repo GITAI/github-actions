@@ -4,7 +4,7 @@ description: Load/Save cache using cloud storage
 
 inputs:
   method:
-    description: "'load', 'save' or 'clear'"
+    description: "'check', 'load', 'save' or 'clear'"
     required: true
   path:
     description: Path to directory to load/save cache relative to $GITHUB_WORKSPACE. Required for 'load' and 'save' method
@@ -40,6 +40,11 @@ inputs:
     default: "ONEZONE_IA"
     required: true
 
+outputs:
+  remote_path_exists:
+    description: true is set if remote path exists
+    value: ${{ steps.cache_local.outputs.remote_path_exists == 'true' || steps.cache_s3.output.remote_path_exists == 'true' }}
+
 runs:
   using: composite
   steps:
@@ -51,13 +56,19 @@ runs:
         echo PREFIX=${PREFIX} | tee -a $GITHUB_ENV
         echo KEY=${KEY} | tee -a $GITHUB_ENV
     - name: ${{ inputs.method }} cache (local)
+      id: cache_local
       if: inputs.remote_path && ! startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
         [[ "$(which zstd)" != "" ]] || apt-get install -qq -y zstd
         [[ "$(which tree)" != "" ]] || apt-get install -qq -y tree
 
-        if [ "${{ inputs.method }}" = "clear" ]; then
+        if [[ -e ${{ inputs.remote_path }}/${KEY}.cache ]]; then
+          echo "::set-output name=remote_path_exists::true"
+        fi
+        if [ "${{ inputs.method }}" = "check" ]; then
+          exit 0
+        elif [ "${{ inputs.method }}" = "clear" ]; then
           echo "Clearing local cache is not supported for security reason"
           exit 1
         fi
@@ -120,6 +131,7 @@ runs:
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
         aws-region: ${{ inputs.aws_region }}
     - name: ${{ inputs.method }} cache (S3)
+      id: cache_s3
       if: inputs.remote_path && startsWith(inputs.remote_path, 's3://')
       shell: bash
       run: |
@@ -127,7 +139,14 @@ runs:
         [[ "$(which tree)" != "" ]] || apt-get install -qq -y tree
         [[ "$(which symlinks)" != "" ]] || apt-get install -qq -y symlinks
 
-        if [ "${{ inputs.method }}" = "clear" ]; then
+        TARGET=$(aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache || echo)
+        if [ -n "${TARGET}" ]; then
+          echo "DEBUGDEBUGDEBUG"
+          echo "::set-output name=remote_path_exists::true"
+        fi
+        if [ "${{ inputs.method }}" = "check" ]; then
+          exit 0
+        elif [ "${{ inputs.method }}" = "clear" ]; then
           if [ "${{ inputs.key }}" = "all" ]; then
             aws s3 rm --recursive ${{ inputs.remote_path }}/${PREFIX}
           else
@@ -155,7 +174,6 @@ runs:
             echo "No data found to save to ${KEY}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
-          TARGET=$(aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache || echo)
           if [ -n "${TARGET}" ]; then
             echo "Cache found"
             echo "${TARGET}"
