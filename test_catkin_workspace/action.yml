@@ -28,7 +28,7 @@ runs:
   using: composite
   steps:
     - name: Setup git config
-      uses: ./setup_git
+      uses: GITAI/github-actions/setup_git@main
       with:
         user: ${{ inputs.user }}
         token: ${{ inputs.token }}
