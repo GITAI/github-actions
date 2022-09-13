@@ -1,0 +1,52 @@
+name: Setup git
+author: Yuki Furuta
+description: Setup git environment
+
+inputs:
+  user:
+    description: Github user used for git operation with remote
+    default: ${{ github.repository_owner }}
+  token:
+    description: Github Personal Access Token used for git operation with remote
+    default: ${{ github.token }}
+  name:
+    description: Full name used for signing to commit
+    default: github-actions[bot]
+  email:
+    description: Email address used for signing to commit
+    default: github-actions[bot]@users.noreply.github.com
+
+runs:
+  using: composite
+  steps:
+    - name: Install requirements
+      shell: bash
+      run: |
+        [[ "$(which findutils)" != "" ]] || apt-get install -qq -y findutils
+        [[ "$(which git)" != "" ]] || apt-get install -qq -y git
+        [[ "$(which ssh)" != "" ]] || apt-get install -qq -y ssh
+    - name: Print the current git config
+      if: env.RUNNER_DEBUG == '1'
+      shell: bash
+      run: |
+        for scope in --local --global; do
+          echo git config $scope --list
+          git config $scope --list || true
+        done
+    - name: Unset preset git config
+      shell: bash
+      run: |
+        for scope in --local --global; do
+          git config $scope --name-only --get-regexp url. | xargs -I% git config $scope --unset-all % || true
+          git config $scope --name-only --get-regexp credential. | xargs -I% git config $scope --unset-all % || true
+          git config $scope --unset-all http.https://github.com/.extraheader || true
+        done
+    - name: Set git config with token
+      shell: bash
+      run: |
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git://github.com/"
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git@github.com:"
+        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "https://github.com/"
+        git config --global user.email "${{ inputs.email }}"
+        git config --global user.name "${{ inputs.name }}"
+        mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts

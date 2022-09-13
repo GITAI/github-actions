@@ -60,17 +60,10 @@ runs:
   using: composite
   steps:
     - name: Setup git config
-      run: |
-        [[ "$(which findutils)" = "" ]] && apt-get install -qq -y findutils
-        [[ "$(which git)" = "" ]] && apt-get install -qq -y git
-        [[ "$(which ssh)" = "" ]] && apt-get install -qq -y ssh
-        git config --name-only --get-regexp url. | xargs -I% git config --global --unset-all % || true
-        git config --unset-all http.https://github.com/.extraheader || true
-        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git://github.com/"
-        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git@github.com:"
-        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "https://github.com/"
-        mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-      shell: bash
+      uses: ./setup_git
+      with:
+        user: ${{ inputs.user }}
+        token: ${{ inputs.token }}
     - name: Setup ccache
       run: |
         [[ "$(which ccache)" = "" ]] && apt-get install -qq -y ccache
@@ -80,7 +73,7 @@ runs:
       shell: bash
     - name: Load build cache
       if: ${{ inputs.cache_build_space != 'false' }}
-      uses: GITAI/github-actions/cache@main
+      uses: ./cache
       with:
         method: load
         key: ${{ inputs.cache_build_space_id }}
@@ -88,7 +81,7 @@ runs:
         remote_path: ${{ inputs.cache_remote_path }}
     - name: Load devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
-      uses: GITAI/github-actions/cache@main
+      uses: ./cache
       with:
         method: load
         key: ${{ inputs.cache_devel_space_id }}
@@ -110,7 +103,7 @@ runs:
     - name: Save build cache
       if: ${{ inputs.cache_build_space != 'false' }}
       id: cache_build_space
-      uses: GITAI/github-actions/cache@main
+      uses: ./cache
       with:
         method: save
         key: ${{ inputs.cache_build_space_id }}
@@ -120,13 +113,9 @@ runs:
     - name: Save devel cache
       if: ${{ inputs.cache_devel_space != 'false' }}
       id: cache_devel_space
-      uses: GITAI/github-actions/cache@main
+      uses: ./cache
       with:
         method: save
         key: ${{ inputs.cache_devel_space_id }}
         path: ${{ inputs.catkin_workspace }}/devel
         remote_path: ${{ inputs.cache_remote_path }}
-    - name: Cleanup git config
-      if: ${{ always() }}
-      run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
-      shell: bash
