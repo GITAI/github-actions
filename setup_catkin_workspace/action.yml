@@ -34,17 +34,10 @@ runs:
   using: composite
   steps:
     - name: Setup git config
-      run: |
-        [[ "$(which findutils)" = "" ]] && apt-get install -qq -y findutils
-        [[ "$(which git)" = "" ]] && apt-get install -qq -y git
-        [[ "$(which ssh)" = "" ]] && apt-get install -qq -y ssh
-        git config --name-only --get-regexp url. | xargs -I% git config --global --unset-all % || true
-        git config --global --unset-all http.https://github.com/.extraheader || true
-        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git://github.com/"
-        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "git@github.com:"
-        git config --global --add "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf" "https://github.com/"
-        mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-      shell: bash
+      uses: ./setup_git
+      with: 
+        user: ${{ inputs.user }}
+        token: ${{ inputs.token }}
     - name: Setup catkin workspace
       run: /setup_catkin_workspace.sh
       shell: bash
@@ -55,7 +48,3 @@ runs:
         ROSINSTALL_FILE: ${{ inputs.rosinstall_file }}
         DEPS_ROSINSTALL_FILE: ${{ inputs.deps_rosinstall_file }}
         TERM: xterm-256color
-    - name: Cleanup git config
-      if: ${{ always() }}
-      run: git config --global --unset-all "url.https://${{ inputs.user }}:${{ inputs.token }}@github.com/.insteadOf"
-      shell: bash
