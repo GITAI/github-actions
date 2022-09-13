@@ -66,7 +66,7 @@ runs:
         token: ${{ inputs.token }}
     - name: Setup ccache
       run: |
-        [[ "$(which ccache)" = "" ]] && apt-get install -qq -y ccache
+        [[ "$(which ccache)" != "" ]] || apt-get install -qq -y ccache
         ccache -M ${{ inputs.ccache_storage_size }}
         ccache -o compression=true
         ccache -o sloppiness=file_macro,time_macros
