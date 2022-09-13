@@ -127,7 +127,7 @@ jobs:
         run: |
           cd foo
           test $(ls -l | wc -l) -gt 1
-          test -n "${{ steps.check_cache_exists.outputs.remote_path_exists }}"
+          test "${{ steps.check_cache_exists.outputs.remote_path_exists }}" = "true"
 
       - name: Test clear cache action
         uses: ./cache
@@ -154,7 +154,7 @@ jobs:
         run: |
           cd bar
           test $(ls -l | wc -l) -eq 1
-          test -z "${{ steps.check_cache_not_exists.outputs.remote_path_exists }}"
+          test "${{ steps.check_cache_not_exists.outputs.remote_path_exists }}" = "false"
 
       - name: Test save local cache action
         uses: ./cache

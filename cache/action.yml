@@ -43,7 +43,7 @@ inputs:
 outputs:
   remote_path_exists:
     description: true is set if remote path exists
-    value: ${{ steps.cache_local.outputs.remote_path_exists == 'true' || steps.cache_s3.output.remote_path_exists == 'true' }}
+    value: ${{ steps.cache_s3.outputs.remote_path_exists == 'true' || steps.cache_local.outputs.remote_path_exists == 'true' }}
 
 runs:
   using: composite
@@ -141,7 +141,6 @@ runs:
 
         TARGET=$(aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache || echo)
         if [ -n "${TARGET}" ]; then
-          echo "DEBUGDEBUGDEBUG"
           echo "::set-output name=remote_path_exists::true"
         fi
         if [ "${{ inputs.method }}" = "check" ]; then
@@ -189,3 +188,8 @@ runs:
           echo "Invalid method you have specified ${{ inputs.method }}"
           exit 1
         fi
+    - name: Print results
+      shell: bash
+      run: |
+        echo "steps=${{ toJson(steps) }}"
+
