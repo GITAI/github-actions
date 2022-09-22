@@ -9,6 +9,9 @@ inputs:
   clang_format_version:
     description: Version of clang-format used for lint
     default: ''
+  prohibited_pattern:
+    description: Prohibited regex pattern
+    default: ''
   repository_name:
     description: Name of the repository
     default: ${{ github.event.pull_request.head.repo.name }}
@@ -29,6 +32,7 @@ runs:
     - --working-directory=/github/workspace/${{ inputs.path }}
   env:
     STYLE_CLANG_FORMAT_VERSION: ${{ inputs.clang_format_version }}
+    STYLE_PROHIBITED_PATTERN: ${{ inputs.prohibited_pattern }}
     CIRCLE_PULL_REQUEST: true
     CIRCLE_PROJECT_USERNAME: ${{ inputs.user }}
     CIRCLE_PROJECT_REPONAME: ${{ inputs.repository_name }}
