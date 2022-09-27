@@ -1,0 +1,39 @@
+# Modified version of https://stackoverflow.com/a/66364010, licensed under CC BY-SA 4.0
+
+name: Run on docker
+description: Execute commands on a docker container inside the runner
+
+inputs:
+  image:
+    description: The image to use
+    required: true
+  command:
+    description: The command to run
+    required: false
+    default: ''
+  options:
+    description: Additional options to pass to docker run
+    required: false
+    default: ''
+  env_pattern:
+    description: The environment variable pattern to pass to the container
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Run
+      shell: bash
+      run: >
+        variables='';
+        for i in $(env | grep '${{ inputs.env_pattern }}' | awk -F '=' '{print $1}'); do
+          variables="--env ${i} ${variables}";
+        done;
+        docker run
+        --rm
+        --mount type=bind,source=${{ github.workspace }},target=${{ github.workspace }}
+        ${variables}
+        ${{ inputs.options }}
+        ${{ inputs.image }}
+        /bin/bash -c "${{ inputs.command }}"

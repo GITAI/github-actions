@@ -220,3 +220,20 @@ jobs:
         timeout-minutes: 10
         with:
           limit-access-to-actor: true
+
+  test-run-on-docker:
+    name: Test run_on_docker action
+    runs-on: [self-hosted, linux, x64]
+    if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout the project
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: true
+          fetch-depth: 0
+      - name: Test running a command on a docker container
+        uses: ./run_on_docker
+        with:
+          image: ubuntu:20.04
+          command: echo Test
