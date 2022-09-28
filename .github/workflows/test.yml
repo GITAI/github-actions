@@ -100,7 +100,7 @@ jobs:
 
   test-cache:
     name: Test cache action
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, linux, x64, vcpu-default, mem-default]
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     needs: test
     steps:
@@ -186,7 +186,7 @@ jobs:
 
   test-docker:
     name: Test setup_docker action
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, linux, x64, vcpu-default, mem-default]
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout the project

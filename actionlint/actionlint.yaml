@@ -1,6 +1,7 @@
 self-hosted-runner:
   labels:
     - local
+    - vcpu-default
     - vcpu-1
     - vcpu-2
     - vcpu-4
@@ -14,6 +15,7 @@ self-hosted-runner:
     - vcpu-64
     - vcpu-96
     - vcpu-128
+    - mem-default
     - mem-1g
     - mem-2g
     - mem-4g
