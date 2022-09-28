@@ -221,8 +221,8 @@ jobs:
         with:
           limit-access-to-actor: true
 
-  test-run-on-docker:
-    name: Test run_on_docker action
+  test-docker-run:
+    name: Test docker_run action
     runs-on: [self-hosted, linux, x64]
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     steps:
@@ -233,7 +233,8 @@ jobs:
           submodules: true
           fetch-depth: 0
       - name: Test running a command on a docker container
-        uses: ./run_on_docker
+        uses: ./docker_run
         with:
           image: ubuntu:20.04
-          command: echo Test
+          entrypoint: /bin/bash
+          args: -c "echo Test"
