@@ -1,0 +1,21 @@
+name: Lint Github Action workflows
+author: Yuki Furuta
+description: Lint Github Actions workflow files
+
+runs:
+  using: composite
+  steps:
+    - name: Install actionlint.yaml
+      shell: bash
+      run: |
+        if [ -e "${GITHUB_WORKSPACE}/.github/actionlint.yaml" ]; then
+          echo "Using the existing actionlint.yaml"
+        else
+          cp -f "${{ github.action_path }}/actionlint.yaml" "${GITHUB_WORKSPACE}/.github/actionlint.yaml"
+        fi
+    - name: Run actionlint
+      uses: reviewdog/action-actionlint@v1
+    - name: Cleanup actionlint.yaml
+      shell: bash
+      run: rm -f "${GITHUB_WORKSPACE}/.github/actionlint.yaml"
+        

@@ -15,7 +15,7 @@ on:
 jobs:
   test:
     name: Test actions
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, linux, x64, vcpu-4, mem-4g]
     if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
     defaults:
       run:
@@ -29,6 +29,8 @@ jobs:
           fetch-depth: 0
       - name: Test lint action
         uses: ./lint
+      - name: Test actionlint action
+        uses: ./actionlint
       - name: Setup catkin workspace with a sample package
         run: |
           mkdir -p catkin_ws/src

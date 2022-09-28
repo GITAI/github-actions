@@ -1,0 +1,24 @@
+self-hosted-runner:
+  labels:
+    - local
+    - vcpu-1
+    - vcpu-2
+    - vcpu-4
+    - vcpu-6
+    - vcpu-8
+    - vcpu-12
+    - vcpu-16
+    - vcpu-32
+    - vcpu-40
+    - vcpu-48
+    - vcpu-64
+    - vcpu-96
+    - vcpu-128
+    - mem-1g
+    - mem-2g
+    - mem-4g
+    - mem-8g
+    - mem-16g
+    - mem-32g
+    - mem-64g
+    - mem-128g
