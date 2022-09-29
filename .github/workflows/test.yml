@@ -91,6 +91,12 @@ jobs:
           method: save
           path: ./catkin_ws/build
           remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Test docker run action
+        uses: ./docker_run
+        with:
+          image: ubuntu:20.04
+          entrypoint: /bin/bash
+          args: -c "echo Test"
       - name: Setup ssh session
         if: failure()
         uses: mxschmitt/action-tmate@v3
@@ -220,21 +226,3 @@ jobs:
         timeout-minutes: 10
         with:
           limit-access-to-actor: true
-
-  test-docker-run:
-    name: Test docker_run action
-    runs-on: [self-hosted, linux, x64]
-    if: contains(github.event.pull_request.labels.*.name, 'OK To Test') || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout the project
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          submodules: true
-          fetch-depth: 0
-      - name: Test running a command on a docker container
-        uses: ./docker_run
-        with:
-          image: ubuntu:20.04
-          entrypoint: /bin/bash
-          args: -c "echo Test"
