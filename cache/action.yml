@@ -52,7 +52,7 @@ runs:
       shell: bash
       run: |
         PREFIX=${{ github.repository }}/${{ github.ref_name }}
-        KEY=${PREFIX}/${{ inputs.key }}
+        KEY=$(echo "${PREFIX}/${{ inputs.key }}" | sed -e 's@[^a-z0-9_-]@-@g')
         echo PREFIX=${PREFIX} | tee -a $GITHUB_ENV
         echo KEY=${KEY} | tee -a $GITHUB_ENV
     - name: ${{ inputs.method }} cache (local)
