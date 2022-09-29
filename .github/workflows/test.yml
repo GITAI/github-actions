@@ -97,12 +97,6 @@ jobs:
           image: ubuntu:20.04
           entrypoint: /bin/bash
           args: -c "echo Test"
-      - name: Setup ssh session
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 10
-        with:
-          limit-access-to-actor: true
 
   test-cache:
     name: Test cache action
@@ -183,12 +177,6 @@ jobs:
         run: |
           cd baz
           test $(ls -l | wc -l) -gt 1
-      - name: Setup ssh session
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 10
-        with:
-          limit-access-to-actor: true
 
   test-docker:
     name: Test setup_docker action
@@ -220,9 +208,3 @@ jobs:
           context: .
           pull: true
           platforms: linux/amd64,linux/arm64
-      - name: Setup ssh session
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 10
-        with:
-          limit-access-to-actor: true
