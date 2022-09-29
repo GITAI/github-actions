@@ -91,6 +91,12 @@ jobs:
           method: save
           path: ./catkin_ws/build
           remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Test docker run action
+        uses: ./docker_run
+        with:
+          image: ubuntu:20.04
+          entrypoint: /bin/bash
+          args: -c "echo Test"
       - name: Setup ssh session
         if: failure()
         uses: mxschmitt/action-tmate@v3
