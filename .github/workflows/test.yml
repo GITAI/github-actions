@@ -37,7 +37,7 @@ jobs:
           cd catkin_ws/src
           git clone https://github.com/ros/geometry_tutorials.git --depth=1 --branch=kinetic-devel project
           cd project
-          rosinstall_generator geometry2 --rosdistro noetic --upstream | tee .travis.rosinstall
+          rosinstall_generator geometry2 --rosdistro noetic --upstream | tee .rosinstall
           apt-get purge ssh -y -qq
       - name: Test setup_catkin_workspace action
         uses: ./setup_catkin_workspace
