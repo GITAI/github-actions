@@ -18,11 +18,11 @@ inputs:
   rosinstall_file:
     description: Path to .rosinstall file of the project
     required: false
-    default: .travis.rosinstall
+    default: .rosinstall
   deps_rosinstall_file:
     description: Path to .rosinstall file of the dependencies of the project
     required: false
-    default: .travis.rosinstall
+    default: .rosinstall
   user:
     description: Username to fetch repositories
     default: ${{ github.repository_owner }}
