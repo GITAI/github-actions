@@ -58,7 +58,7 @@ runs:
         docker context use ${{ inputs.context }}
     - name: Setup QEMU
       if: inputs.setup_qemu
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
     - name: Setup docker buildx
       if: inputs.setup_buildx
       uses: docker/setup-buildx-action@v2
