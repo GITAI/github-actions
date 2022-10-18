@@ -203,7 +203,7 @@ jobs:
         shell: bash
         run: echo "${{ steps.setup_docker.outputs.platforms }}" | grep linux
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           pull: true
