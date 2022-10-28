@@ -44,17 +44,29 @@ outputs:
   remote_path_exists:
     description: true is set if remote path exists
     value: ${{ steps.cache_s3.outputs.remote_path_exists == 'true' || steps.cache_local.outputs.remote_path_exists == 'true' }}
+  prefix:
+    description: Prefix for cache
+    value: ${{ steps.cache_key.outputs.prefix }}
+  key:
+    description: Escaped key for cache
+    value: ${{ steps.cache_key.outputs.key }}
 
 runs:
   using: composite
   steps:
-    - name: Set variable
+    - name: Set cache key
       shell: bash
+      id: cache_key
       run: |
-        PREFIX=${{ github.repository }}/${{ github.ref_name }}
-        KEY="${PREFIX}/$(echo "${{ inputs.key }}" | sed -e 's@[^a-zA-Z0-9_\-]@-@g')"
-        echo PREFIX=${PREFIX} | tee -a $GITHUB_ENV
-        echo KEY=${KEY} | tee -a $GITHUB_ENV
+        CACHE_PREFIX="${{ github.repository }}"
+        if [[ -n "${{ github.base_ref }}" ]]; then
+          CACHE_PREFIX="${CACHE_PREFIX}/${{ github.base_ref }}"
+        else
+          CACHE_PREFIX="${CACHE_PREFIX}/${{ github.ref_name }}"
+        fi
+        CACHE_KEY="${CACHE_PREFIX}/$(echo "${{ inputs.key }}" | sed -e 's@[^a-zA-Z0-9_\-]@-@g')"
+        echo "prefix=${CACHE_PREFIX}" >> $GITHUB_OUTPUT
+        echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
     - name: ${{ inputs.method }} cache (local)
       id: cache_local
       if: inputs.remote_path && ! startsWith(inputs.remote_path, 's3://')
@@ -63,8 +75,8 @@ runs:
         [[ "$(which zstd)" != "" ]] || apt-get install -qq -y zstd
         [[ "$(which tree)" != "" ]] || apt-get install -qq -y tree
 
-        if [[ -e ${{ inputs.remote_path }}/${KEY}.cache ]]; then
-          echo "::set-output name=remote_path_exists::true"
+        if [[ -e ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache ]]; then
+          echo remote_path_exists=true >> $GITHUB_OUTPUT
         fi
         if [ "${{ inputs.method }}" = "check" ]; then
           exit 0
@@ -85,26 +97,26 @@ runs:
             if [[ -n "${RUNNER_DEBUG}" ]]; then
               cat /tmp/symlinks.log
             fi
-            mkdir -p $(dirname "${{ inputs.remote_path }}/${KEY}.cache")
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${KEY}.cache.new
-            mv -f ${{ inputs.remote_path }}/${KEY}.cache.new ${{ inputs.remote_path }}/${KEY}.cache
-            echo "${NUM_TARGETS} files/directories were saved to local ${KEY}"
-            ls -l ${{ inputs.remote_path }}/${KEY}.cache
+            mkdir -p $(dirname "${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache")
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache.new
+            mv -f ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache.new ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
+            echo "${NUM_TARGETS} files/directories were saved to local ${{ steps.cache_key.outputs.key }}"
+            ls -l ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
           else
-            echo "No data found to save to local ${KEY}"
+            echo "No data found to save to local ${{ steps.cache_key.outputs.key }}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
-          TARGET=$(ls -l ${{ inputs.remote_path }}/${KEY}.cache 2>/dev/null || echo)
+          TARGET=$(ls -l ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache 2>/dev/null || echo)
           if [ -n "${TARGET}" ]; then
             echo "Cache found"
             echo "${TARGET}"
-            cat ${{ inputs.remote_path }}/${KEY}.cache | zstd -d -T0 - | tar -x .
-            echo "Cache were loaded from ${KEY}"
+            cat ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache | zstd -d -T0 - | tar -x .
+            echo "Cache were loaded from ${{ steps.cache_key.outputs.key }}"
             if [[ -n "${RUNNER_DEBUG}" ]]; then
               tree -a -I .git
             fi
           else
-            echo "No local cache found to load from ${KEY}"
+            echo "No local cache found to load from ${{ steps.cache_key.outputs.key }}"
           fi
         else
           echo "Invalid method you have specified ${{ inputs.method }}"
@@ -139,17 +151,17 @@ runs:
         [[ "$(which tree)" != "" ]] || apt-get install -qq -y tree
         [[ "$(which symlinks)" != "" ]] || apt-get install -qq -y symlinks
 
-        TARGET=$(aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache || echo)
+        TARGET=$(aws s3 ls ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache || echo)
         if [ -n "${TARGET}" ]; then
-          echo "::set-output name=remote_path_exists::true"
+          echo remote_path_exists=true >> $GITHUB_OUTPUT
         fi
         if [ "${{ inputs.method }}" = "check" ]; then
           exit 0
         elif [ "${{ inputs.method }}" = "clear" ]; then
           if [ "${{ inputs.key }}" = "all" ]; then
-            aws s3 rm --recursive ${{ inputs.remote_path }}/${PREFIX}
+            aws s3 rm --recursive ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.prefix }}
           else
-            aws s3 rm ${{ inputs.remote_path }}/${KEY}.cache
+            aws s3 rm ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
           fi
           exit 0
         fi
@@ -166,23 +178,23 @@ runs:
             if [[ -n "${RUNNER_DEBUG}" ]]; then
               cat /tmp/symlinks.log
             fi
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - ${{ inputs.remote_path }}/${KEY}.cache
-            echo "${NUM_TARGETS} files/directories were saved to ${KEY}"
-            aws s3 ls ${{ inputs.remote_path }}/${KEY}.cache
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
+            echo "${NUM_TARGETS} files/directories were saved to ${{ steps.cache_key.outputs.key }}"
+            aws s3 ls ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
           else
-            echo "No data found to save to ${KEY}"
+            echo "No data found to save to ${{ steps.cache_key.outputs.key }}"
           fi
         elif [ "${{ inputs.method }}" = "load" ]; then
           if [ -n "${TARGET}" ]; then
             echo "Cache found"
             echo "${TARGET}"
-            aws s3 cp ${{ inputs.remote_path }}/${KEY}.cache - | zstd -d -T0 - | tar -x .
-            echo "Cache were loaded from ${KEY}"
+            aws s3 cp ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache - | zstd -d -T0 - | tar -x .
+            echo "Cache were loaded from ${{ steps.cache_key.outputs.key }}"
             if [[ -n "${RUNNER_DEBUG}" ]]; then
               tree -a -I .git
             fi
           else
-            echo "No cache found to load from ${KEY}"
+            echo "No cache found to load from ${{ steps.cache_key.outputs.key }}"
           fi
         else
           echo "Invalid method you have specified ${{ inputs.method }}"
