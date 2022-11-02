@@ -20,6 +20,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    outputs:
+      timestamp: ${{ steps.dummy_file.outputs.timestamp }}
     steps:
       - name: Checkout the project
         uses: actions/checkout@v3
@@ -43,10 +45,12 @@ jobs:
         uses: ./setup_catkin_workspace
         with:
           catkin_workspace: catkin_ws
+          cache_remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
       - name: Make trivial changes to C++ codes
         run: |
           cd catkin_ws/src/project
           find . -name '*.cpp' | xargs -I{} sed -i -E 's/Copyright/COPYRIGHT/g' {}
+          sed -i 's@include_directories(@execute_process(COMMAND sleep 30)\ninclude_directories(@g' turtle_tf2/CMakeLists.txt
           git add .
           git config user.name "GITAI"
           git config user.email admin@gitai.tech
@@ -84,6 +88,12 @@ jobs:
         uses: ./lint_clang_tidy
         with:
           path: catkin_ws/clang-tidy-results
+      - name: Create dummy file to ./catkin_ws/build/dummy_file
+        id: dummy_file
+        run: |
+          cd catkin_ws/build
+          touch dummy_file
+          echo timestamp=$(stat -c '%Y' dummy_file) >> $GITHUB_OUTPUT
       - name: Test save cache action
         uses: ./cache
         id: cache_build
@@ -130,7 +140,12 @@ jobs:
           cd foo
           test $(ls -l | wc -l) -gt 1
           test "${{ steps.check_cache_exists.outputs.remote_path_exists }}" = "true"
-
+      - name: Check dummy_file exists and timestamp is not modified
+        shell: bash
+        run: |
+          cd foo
+          test -e dummy_file
+          test $(stat -c '%Y' dummy_file) -eq ${{ needs.test.outputs.timestamp }}
       - name: Test clear cache action
         uses: ./cache
         with:
@@ -157,7 +172,6 @@ jobs:
           cd bar
           test $(ls -l | wc -l) -eq 1
           test "${{ steps.check_cache_not_exists.outputs.remote_path_exists }}" = "false"
-
       - name: Test save local cache action
         uses: ./cache
         id: local_cache

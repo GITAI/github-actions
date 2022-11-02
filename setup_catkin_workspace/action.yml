@@ -29,6 +29,16 @@ inputs:
   token:
     description: Token to fetch repositories
     default: ${{ github.token }}
+  # cache
+  cache_source_space:
+    description: Enable caching source workspace
+    default: true
+  cache_source_space_id:
+    description: Id for source space cache
+    default: '${{ github.action }}_source'
+  cache_remote_path:
+    description: Remote path to use for uploading/downloading cache
+    default: ''
 
 runs:
   using: composite
@@ -38,6 +48,14 @@ runs:
       with: 
         user: ${{ inputs.user }}
         token: ${{ inputs.token }}
+    - name: Load source cache
+      if: ${{ inputs.cache_source_space != 'false' }}
+      uses: GITAI/github-actions/cache@main
+      with:
+        method: load
+        key: ${{ inputs.cache_source_space_id }}
+        path: ${{ inputs.catkin_workspace }}/src
+        remote_path: ${{ inputs.cache_remote_path }}
     - name: Setup catkin workspace
       run: /setup_catkin_workspace.sh
       shell: bash
@@ -48,3 +66,12 @@ runs:
         ROSINSTALL_FILE: ${{ inputs.rosinstall_file }}
         DEPS_ROSINSTALL_FILE: ${{ inputs.deps_rosinstall_file }}
         TERM: xterm-256color
+    - name: Save source cache
+      if: ${{ inputs.cache_source_space != 'false' }}
+      id: cache_source_space
+      uses: GITAI/github-actions/cache@main
+      with:
+        method: save
+        key: ${{ inputs.cache_source_space_id }}
+        path: ${{ inputs.catkin_workspace }}/src
+        remote_path: ${{ inputs.cache_remote_path }}
