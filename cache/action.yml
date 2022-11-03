@@ -98,7 +98,7 @@ runs:
               cat /tmp/symlinks.log
             fi
             mkdir -p $(dirname "${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache")
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache.new
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --posix --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - -o ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache.new
             mv -f ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache.new ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
             echo "${NUM_TARGETS} files/directories were saved to local ${{ steps.cache_key.outputs.key }}"
             ls -l ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
@@ -178,7 +178,7 @@ runs:
             if [[ -n "${RUNNER_DEBUG}" ]]; then
               cat /tmp/symlinks.log
             fi
-            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
+            find . -iwholename './${{ inputs.include }}' -not -iwholename './${{ inputs.exclude }}' -print0 | tar -c --no-recursion --posix --null -T - | zstd -z -${{ inputs.compress_level }} -T0 - | aws s3 cp --storage-class ${{ inputs.storage_class }} - ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
             echo "${NUM_TARGETS} files/directories were saved to ${{ steps.cache_key.outputs.key }}"
             aws s3 ls ${{ inputs.remote_path }}/${{ steps.cache_key.outputs.key }}.cache
           else
