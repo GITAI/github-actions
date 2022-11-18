@@ -75,3 +75,4 @@ runs:
         key: ${{ inputs.cache_source_space_id }}
         path: ${{ inputs.catkin_workspace }}/src
         remote_path: ${{ inputs.cache_remote_path }}
+        exclude: 'project/**'

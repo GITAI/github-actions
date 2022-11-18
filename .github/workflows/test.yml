@@ -40,6 +40,7 @@ jobs:
         with:
           catkin_workspace: catkin_ws
           cache_remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+          cache_source_space_id: setup_catkin_workspace_source_space
       - name: Make trivial changes to C++ codes
         run: |
           cd catkin_ws/src/project
@@ -184,6 +185,19 @@ jobs:
         run: |
           cd baz
           test $(ls -l | wc -l) -gt 1
+      - name: Load setup_catkin_workspace cached source space
+        uses: ./cache
+        with:
+          method: load
+          key: setup_catkin_workspace_source_space
+          path: ./source_space
+          remote_path: s3://${{ secrets.AWS_S3_BUCKET_NAME }}
+      - name: Check setup_catkin_workspace cached source space
+        shell: bash
+        run: |
+          cd source_space
+          test -e geometry2
+          test ! -e project/package.xml
 
   test-docker:
     name: Test setup_docker action
