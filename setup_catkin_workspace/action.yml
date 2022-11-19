@@ -23,6 +23,10 @@ inputs:
     description: Path to .rosinstall file of the dependencies of the project
     required: false
     default: .rosinstall
+  project_name:
+    description: Path to the directory to setup workspace from
+    required: false
+    default: project
   user:
     description: Username to fetch repositories
     default: ${{ github.repository_owner }}
@@ -66,6 +70,7 @@ runs:
         ROSINSTALL_FILE: ${{ inputs.rosinstall_file }}
         DEPS_ROSINSTALL_FILE: ${{ inputs.deps_rosinstall_file }}
         TERM: xterm-256color
+        PROJECT_NAME: ${{ inputs.project_name }}
     - name: Save source cache
       if: ${{ inputs.cache_source_space != 'false' }}
       id: cache_source_space
@@ -75,4 +80,4 @@ runs:
         key: ${{ inputs.cache_source_space_id }}
         path: ${{ inputs.catkin_workspace }}/src
         remote_path: ${{ inputs.cache_remote_path }}
-        exclude: 'project/**'
+        exclude: '${{ inputs.project_name }}/**'

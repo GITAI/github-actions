@@ -27,6 +27,7 @@ jobs:
         uses: ./lint
       - name: Test actionlint action
         uses: ./actionlint
+      # Here geometry_tutorials repo is used as the source project and geometry2 repo is used as its dependency
       - name: Setup catkin workspace with a sample package
         run: |
           mkdir -p catkin_ws/src
@@ -195,6 +196,7 @@ jobs:
       - name: Check setup_catkin_workspace cached source space
         shell: bash
         run: |
+          # check if only dependencies in the workspace are cached
           cd source_space
           test -e geometry2
           test ! -e project/package.xml
